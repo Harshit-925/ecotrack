@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "test": "tsx tests/calculator.test.ts"
+    "test": "tsx tests/calculator.test.ts && tsx tests/ui.test.ts"
   },
   "devDependencies": {
     "typescript": "^5.3.3",

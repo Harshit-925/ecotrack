@@ -40,32 +40,53 @@ test('EcoTrack Carbon Calculation Suite', async (t) => {
   await t.test('Car fuel type adjustments correctly adjust transport emissions', () => {
     const gasolineState = { ...defaultValues, carType: 'gasoline' };
     const electricState = { ...defaultValues, carType: 'electric' };
+    const dieselState = { ...defaultValues, carType: 'diesel' };
+    const hybridState = { ...defaultValues, carType: 'hybrid' };
 
     const resGas = calculateEmissions(gasolineState);
     const resElec = calculateEmissions(electricState);
+    const resDiesel = calculateEmissions(dieselState);
+    const resHybrid = calculateEmissions(hybridState);
 
-    // Electric car should have drastically lower transport emissions than gasoline
+    // Electric car should have drastically lower transport emissions than gasoline and diesel
     assert.ok(resElec.transport < resGas.transport);
+    assert.ok(resGas.transport < resDiesel.transport);
+    assert.ok(resHybrid.transport < resGas.transport);
   });
 
   await t.test('Clean energy multipliers (Solar/Wind) yield lower electricity footprint', () => {
     const gridState = { ...defaultValues, energySource: 'grid' };
     const solarState = { ...defaultValues, energySource: 'solar' };
+    const windState = { ...defaultValues, energySource: 'wind' };
+    const mixedState = { ...defaultValues, energySource: 'mixed' };
 
     const resGrid = calculateEmissions(gridState);
     const resSolar = calculateEmissions(solarState);
+    const resWind = calculateEmissions(windState);
+    const resMixed = calculateEmissions(mixedState);
 
     assert.ok(resSolar.energy < resGrid.energy);
+    assert.ok(resWind.energy < resSolar.energy); // Wind factor (0.02) is lower than solar (0.05)
+    assert.ok(resMixed.energy < resGrid.energy);
   });
 
   await t.test('Diet choices calculate expected offset rankings', () => {
     const meatState = { ...defaultValues, dietType: 'meat-heavy' };
+    const averageState = { ...defaultValues, dietType: 'average' };
+    const pescatarianState = { ...defaultValues, dietType: 'pescatarian' };
+    const veggieState = { ...defaultValues, dietType: 'vegetarian' };
     const veganState = { ...defaultValues, dietType: 'vegan' };
 
     const resMeat = calculateEmissions(meatState);
+    const resAvg = calculateEmissions(averageState);
+    const resPesc = calculateEmissions(pescatarianState);
+    const resVeg = calculateEmissions(veggieState);
     const resVegan = calculateEmissions(veganState);
 
-    assert.ok(resVegan.diet < resMeat.diet);
+    assert.ok(resAvg.diet < resMeat.diet);
+    assert.ok(resPesc.diet < resAvg.diet);
+    assert.ok(resVeg.diet < resPesc.diet);
+    assert.ok(resVegan.diet < resVeg.diet);
   });
 
   await t.test('Strict input bounds checking clamps out-of-bounds parameters safely', () => {
@@ -83,6 +104,31 @@ test('EcoTrack Carbon Calculation Suite', async (t) => {
     assert.strictEqual(sanitized.publicTransit, 0);
     assert.strictEqual(sanitized.foodWaste, 50);
     assert.strictEqual(sanitized.electricity, 1000);
+  });
+
+  await t.test('Mathematical edge-cases (NaN, Infinity, null, undefined) clamp to default minimums safely', () => {
+    const edgeCaseInput = {
+      ...defaultValues,
+      carKm: NaN,
+      publicTransit: Infinity,
+      electricity: -Infinity,
+      foodWaste: undefined,
+      recycling: null
+    };
+
+    // Cast as Partial to allow compiling with null/undefined values
+    const sanitized = sanitizeStateValues(edgeCaseInput as unknown as Partial<StateValues>);
+
+    // NaN should clamp to minimum (0)
+    assert.strictEqual(sanitized.carKm, 0);
+    // Infinity should clamp to default minimum (0) due to !isFinite safety fallback
+    assert.strictEqual(sanitized.publicTransit, 0);
+    // -Infinity should clamp to minimum (0)
+    assert.strictEqual(sanitized.electricity, 0);
+    // undefined should fallback to default (15)
+    assert.strictEqual(sanitized.foodWaste, 15);
+    // null should fallback to default (30)
+    assert.strictEqual(sanitized.recycling, 30);
   });
 
   await t.test('Calculates correct grade scales based on final emissions total', () => {

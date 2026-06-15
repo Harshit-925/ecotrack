@@ -25,7 +25,9 @@ document.addEventListener('DOMContentLoaded', () => {
         results: null,
         chartsRendered: false
     };
-    // Calculate & update the running total shown in sticky footer
+    /**
+     * Calculates emissions based on current state values and updates the running total label in the sticky footer.
+     */
     function updateRunningTotal() {
         const res = calculateEmissions(state.values);
         const valEl = document.getElementById('running-total-value');
@@ -40,13 +42,15 @@ document.addEventListener('DOMContentLoaded', () => {
     let canvas = null;
     let ctx = null;
     let particles = [];
+    /**
+     * Initializes the particle background canvas, binds size listeners, and starts the render loop.
+     */
     function initParticles() {
         canvas = document.getElementById('particles-canvas');
         if (!canvas)
             return;
         ctx = canvas.getContext('2d');
         resizeCanvas();
-        // Create initial pool
         const count = window.innerWidth < 768 ? 30 : 70;
         particles = [];
         for (let i = 0; i < count; i++) {
@@ -55,12 +59,20 @@ document.addEventListener('DOMContentLoaded', () => {
         window.addEventListener('resize', resizeCanvas);
         requestAnimationFrame(animateParticles);
     }
+    /**
+     * Synchronizes the particle canvas buffer width and height with browser dimensions.
+     */
     function resizeCanvas() {
         if (!canvas)
             return;
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
     }
+    /**
+     * Generates a new randomized particle object.
+     *
+     * @param randomY - If true, randomizes height. If false, initializes below canvas bounds.
+     */
     function createParticle(randomY = false) {
         const colors = ['#22C55E', '#10B981', '#3B82F6'];
         const w = canvas ? canvas.width : window.innerWidth;
@@ -78,10 +90,12 @@ document.addEventListener('DOMContentLoaded', () => {
             swayOffset: Math.random() * Math.PI * 2
         };
     }
+    /**
+     * Redraws particles on every frame, applying sine-wave sway and recycling particles.
+     */
     function animateParticles(timestamp) {
         if (!canvas || !ctx)
             return;
-        // Respect user motion choice
         if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             return;
@@ -89,11 +103,9 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         for (let i = 0; i < particles.length; i++) {
             const p = particles[i];
-            // Update
             p.y += p.speedY;
             p.swayOffset += p.swaySpeed;
             p.x += p.speedX + Math.sin(p.swayOffset) * 0.2;
-            // Draw
             ctx.save();
             ctx.globalAlpha = p.opacity;
             ctx.fillStyle = p.color;
@@ -101,7 +113,6 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
             ctx.fill();
             ctx.restore();
-            // Recirculate if particle drifts off top or sides
             if (p.y < -10 || p.x < -10 || p.x > canvas.width + 10) {
                 particles[i] = createParticle(false);
             }
@@ -111,6 +122,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================================================
     // 3. ANIMATED NUMBER COUNTER
     // ==========================================================================
+    /**
+     * animates counting values upwards using smooth ease-out curves.
+     *
+     * @param element - The HTML element target.
+     * @param target - Target final value.
+     * @param duration - Transition speed duration in ms.
+     * @param prefix - Character prefix (e.g. '$').
+     * @param suffix - Character suffix (e.g. '%').
+     * @param decimals - Decimal resolution.
+     */
     function animateCounter(element, target, duration = 1500, prefix = '', suffix = '', decimals = 2) {
         if (!element)
             return;
@@ -120,7 +141,6 @@ document.addEventListener('DOMContentLoaded', () => {
         function update(currentTime) {
             const elapsed = currentTime - startTime;
             const progress = Math.min(elapsed / duration, 1);
-            // Easing: cubic-bezier easeOut
             const ease = 1 - Math.pow(1 - progress, 3);
             const current = start + (target - start) * ease;
             el.innerText = prefix + current.toLocaleString(undefined, {
@@ -144,6 +164,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================================================
     let activeDonutIndex = -1;
     let donutAnimProgress = 0;
+    /**
+     * Draws a custom styled donut breakdown chart using low-level 2D canvas context.
+     *
+     * @param canvasEl - Target canvas element.
+     * @param data - Category breakdown items array.
+     * @param animated - Whether to animate.
+     */
     function drawDonutChart(canvasEl, data, animated = true) {
         if (!canvasEl)
             return;
@@ -154,7 +181,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const rect = canvasEl.getBoundingClientRect();
         const width = Math.round(rect.width);
         const height = Math.round(rect.height);
-        // HDPI setup
         canvasEl.width = width * dpr;
         canvasEl.height = height * dpr;
         chartCtx.scale(dpr, dpr);
@@ -169,11 +195,10 @@ document.addEventListener('DOMContentLoaded', () => {
             chartCtx.clearRect(0, 0, width, height);
             if (totalVal === 0)
                 return;
-            let startAngle = -Math.PI / 2; // Start at 12 o'clock
+            let startAngle = -Math.PI / 2;
             data.forEach((item, index) => {
                 const sliceAngle = (item.value / totalVal) * (Math.PI * 2);
                 const endAngle = startAngle + sliceAngle * progress;
-                // Visual highlight expand on hover index
                 let currentOuter = outerRadius;
                 let currentInner = innerRadius;
                 let shiftX = 0;
@@ -188,7 +213,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 chartCtx.save();
                 chartCtx.translate(shiftX, shiftY);
                 chartCtx.beginPath();
-                // Inner and outer rings with spacing gap (1.5 degrees / 0.026 rad)
                 const gap = 0.025;
                 chartCtx.arc(centerX, centerY, currentOuter, startAngle + gap, endAngle - gap);
                 chartCtx.arc(centerX, centerY, currentInner, endAngle - gap, startAngle + gap, true);
@@ -198,7 +222,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 chartCtx.restore();
                 startAngle += sliceAngle;
             });
-            // Center text
             chartCtx.fillStyle = '#F8FAFC';
             chartCtx.font = `bold 24px 'Space Grotesk'`;
             chartCtx.textAlign = 'center';
@@ -215,7 +238,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     startTime = timestamp;
                 const elapsed = timestamp - startTime;
                 donutAnimProgress = Math.min(elapsed / 1200, 1);
-                // Easing cubicOut
                 const ease = 1 - Math.pow(1 - donutAnimProgress, 3);
                 draw(ease);
                 if (donutAnimProgress < 1) {
@@ -231,7 +253,6 @@ document.addEventListener('DOMContentLoaded', () => {
             draw(1);
             setupDonutInteractivity(canvasEl, data, centerX, centerY, outerRadius, innerRadius, totalVal);
         }
-        // Legend construction
         const legendEl = document.getElementById('donut-legend');
         if (legendEl) {
             legendEl.textContent = '';
@@ -264,17 +285,18 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     }
+    /**
+     * Sets up hover triggers on the donut canvas, resolving active slice segments.
+     */
     function setupDonutInteractivity(canvasEl, data, centerX, centerY, outerRadius, innerRadius, totalVal) {
         canvasEl.onmousemove = (e) => {
             const rect = canvasEl.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
-            // Distance from center
             const dx = x - centerX;
             const dy = y - centerY;
             const dist = Math.sqrt(dx * dx + dy * dy);
             if (dist >= innerRadius && dist <= outerRadius + 8) {
-                // Calculate angle from 12 o'clock (-Math.PI/2)
                 let angle = Math.atan2(dy, dx);
                 if (angle < -Math.PI / 2) {
                     angle += Math.PI * 2;
@@ -311,6 +333,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // 5. BAR CHART (Horizontal comparisons)
     // ==========================================================================
     let barAnimProgress = 0;
+    /**
+     * Draws comparative horizontal bar charts showing benchmarks against EU/US/World averages.
+     *
+     * @param canvasEl - Target canvas element.
+     * @param userTotal - User footprint emissions value.
+     */
     function drawBarChart(canvasEl, userTotal) {
         if (!canvasEl)
             return;
@@ -342,62 +370,56 @@ document.addEventListener('DOMContentLoaded', () => {
         const rowHeight = 44;
         const barHeight = 16;
         const startY = 32;
-        // Determine user bar color based on footprint size
-        let userColor = '#EF4444'; // Red
+        let userColor = '#EF4444';
         if (userTotal < TARGET_2030)
-            userColor = '#22C55E'; // Green
+            userColor = '#22C55E';
         else if (userTotal < WORLD_AVERAGE)
-            userColor = '#4ADE80'; // Light Green
+            userColor = '#4ADE80';
         else if (userTotal < EU_AVERAGE)
-            userColor = '#F59E0B'; // Amber
+            userColor = '#F59E0B';
         function draw(progress) {
             if (!chartCtx)
                 return;
             chartCtx.clearRect(0, 0, width, height);
             benchmarks.forEach((b, i) => {
                 const y = startY + i * rowHeight;
-                // Draw Label
                 chartCtx.fillStyle = b.isUser ? '#F8FAFC' : '#94A3B8';
                 chartCtx.font = b.isUser ? `bold 13px 'Inter'` : `13px 'Inter'`;
                 chartCtx.textAlign = 'right';
                 chartCtx.textBaseline = 'middle';
                 chartCtx.fillText(b.label, paddingLeft - 12, y + barHeight / 2);
-                // Draw background track
                 chartCtx.fillStyle = '#0f172a';
                 chartCtx.beginPath();
-                if (typeof chartCtx.roundRect === 'function') {
-                    chartCtx.roundRect(paddingLeft, y, chartWidth, barHeight, 4);
+                const roundedCtx = chartCtx;
+                if (typeof roundedCtx.roundRect === 'function') {
+                    roundedCtx.roundRect(paddingLeft, y, chartWidth, barHeight, 4);
                 }
                 else {
                     chartCtx.rect(paddingLeft, y, chartWidth, barHeight);
                 }
                 chartCtx.fill();
-                // Calculate fill width
                 const fillWidth = (b.value / maxVal) * chartWidth * progress;
-                // Draw Fill
                 chartCtx.save();
                 if (b.isUser) {
                     chartCtx.fillStyle = userColor;
-                    // Apply drop shadow glow on User bar
                     chartCtx.shadowBlur = 10;
                     chartCtx.shadowColor = userColor;
                 }
                 else if (b.label === '2030 Target') {
-                    chartCtx.fillStyle = '#3B82F6'; // Blue accent for target
+                    chartCtx.fillStyle = '#3B82F6';
                 }
                 else {
-                    chartCtx.fillStyle = 'rgba(148, 163, 184, 0.4)'; // Muted gray
+                    chartCtx.fillStyle = 'rgba(148, 163, 184, 0.4)';
                 }
                 chartCtx.beginPath();
-                if (typeof chartCtx.roundRect === 'function') {
-                    chartCtx.roundRect(paddingLeft, y, Math.max(2, fillWidth), barHeight, 4);
+                if (typeof roundedCtx.roundRect === 'function') {
+                    roundedCtx.roundRect(paddingLeft, y, Math.max(2, fillWidth), barHeight, 4);
                 }
                 else {
                     chartCtx.rect(paddingLeft, y, Math.max(2, fillWidth), barHeight);
                 }
                 chartCtx.fill();
                 chartCtx.restore();
-                // Draw Value Label on right
                 chartCtx.fillStyle = b.isUser ? userColor : '#CBD5E1';
                 chartCtx.font = `bold 12px 'JetBrains Mono'`;
                 chartCtx.textAlign = 'left';
@@ -426,10 +448,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================================================
     // 6. CALCULATOR WIZARD NAVIGATION
     // ==========================================================================
+    /**
+     * Activates a specific step in the 4-step wizard card and toggles button states.
+     *
+     * @param stepNum - The target step index (1-4).
+     */
     function goToStep(stepNum) {
         if (stepNum < 1 || stepNum > state.totalSteps)
             return;
-        // Slide/Fade animation out for current step
         const currentStepEl = document.getElementById(`step-${state.currentStep}`);
         const nextStepEl = document.getElementById(`step-${stepNum}`);
         if (currentStepEl && nextStepEl) {
@@ -437,7 +463,6 @@ document.addEventListener('DOMContentLoaded', () => {
             nextStepEl.classList.add('active');
         }
         state.currentStep = stepNum;
-        // Update Progress Step Classes
         document.querySelectorAll('.progress-step').forEach((el, index) => {
             const stepIdx = index + 1;
             el.classList.remove('active', 'completed');
@@ -448,20 +473,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 el.classList.add('completed');
             }
         });
-        // Update wizard progress percentage
         const progressVal = ((stepNum - 1) / (state.totalSteps - 1)) * 100;
         const progressWrapper = document.querySelector('.calc-progress');
         if (progressWrapper) {
             progressWrapper.setAttribute('aria-valuenow', progressVal.toString());
         }
-        // Toggle navigation button visibilities
         const btnPrev = document.getElementById('btn-prev');
         const btnNext = document.getElementById('btn-next');
         const btnCalc = document.getElementById('btn-calculate');
         if (btnPrev && btnNext && btnCalc) {
-            // Prev button visibility
             btnPrev.style.visibility = stepNum === 1 ? 'hidden' : 'visible';
-            // Next / Calculate toggle
             if (stepNum === state.totalSteps) {
                 btnNext.classList.add('hidden');
                 btnCalc.classList.remove('hidden');
@@ -471,10 +492,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 btnCalc.classList.add('hidden');
             }
         }
-        // Auto update running total
         updateRunningTotal();
     }
-    // Set up button click navigation handlers
+    /**
+     * Binds mouse click events to prev/next navigation controls and step progress buttons.
+     */
     function initNavigation() {
         const btnPrev = document.getElementById('btn-prev');
         const btnNext = document.getElementById('btn-next');
@@ -491,19 +513,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (btnCalc) {
             btnCalc.addEventListener('click', () => {
-                // Run full calculations and update visual dashboard
                 const results = calculateEmissions(state.values);
                 state.results = results;
-                // Save current inputs to localStorage
                 localStorage.setItem('ecotrack_state', JSON.stringify(state.values));
                 showResults(results);
             });
         }
-        // Allow progress steps to click jump back
         document.querySelectorAll('.progress-step').forEach(btn => {
             btn.addEventListener('click', () => {
                 const stepNum = parseInt(btn.getAttribute('data-step') || '1');
-                // Only allow jumping back or to immediate next step
                 if (stepNum < state.currentStep || stepNum === state.currentStep + 1) {
                     goToStep(stepNum);
                 }
@@ -513,6 +531,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================================================
     // 7. INPUT SLIDERS & BUTTON GROUPS HANDLERS
     // ==========================================================================
+    /**
+     * Hooks up input ranges and value feedback nodes for sliders.
+     */
     function initSliders() {
         setupSlider('input-car-km', 'val-car-km');
         setupSlider('input-public-transit', 'val-public-transit');
@@ -526,13 +547,18 @@ document.addEventListener('DOMContentLoaded', () => {
         setupSlider('input-recycling', 'val-recycling');
         setupSlider('input-digital', 'val-digital');
     }
+    setupButtonSelector('group-calc-mode', 'calcMode');
+    /**
+     * Configures bidirectional synchronization between slider and manual text input.
+     *
+     * @param sliderId - Input element ID.
+     * @param displayId - Label display element ID.
+     */
     function setupSlider(sliderId, displayId) {
         const slider = document.getElementById(sliderId);
         const manualInput = document.getElementById(sliderId + '-manual');
-        // Map input to state key
         const stateKey = sliderId.replace('input-', '').replace(/-([a-z])/g, (g) => g[1].toUpperCase());
         const syncValues = (val) => {
-            // Bounds checks matching type-safe definitions in calculator.ts
             let min = 0;
             let max = 100;
             if (stateKey === 'carKm') {
@@ -579,14 +605,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 min = 0;
                 max = 16;
             }
-            // Clamp value strictly
             const clampedVal = Math.max(min, Math.min(max, val));
+            // Eliminate raw 'any' key index assignment using cast to union type
             state.values[stateKey] = clampedVal;
             if (slider)
                 slider.value = clampedVal.toString();
             if (manualInput)
                 manualInput.value = clampedVal.toString();
-            // Update manual text value labels (not the inputs)
             const displaySpan = document.getElementById(displayId);
             if (displaySpan) {
                 let text = clampedVal.toString();
@@ -620,19 +645,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 syncValues(parseInt(manualInput.value) || 0);
             });
         }
-        // Sync initial state values
         if (state.values[stateKey] !== undefined) {
             syncValues(state.values[stateKey]);
         }
     }
+    /**
+     * Initializes selector button groups for fuel types and energy sources.
+     */
     function initSelectOptions() {
-        // 1. Car type
         setupButtonSelector('group-car-type', 'carType');
-        // 2. Electricity source
         setupButtonSelector('group-energy-source', 'energySource');
-        // 3. Heating source
         setupButtonSelector('group-heating', 'heating');
     }
+    /**
+     * Sets up selection events inside a button choice container.
+     *
+     * @param groupId - Parent element ID.
+     * @param stateKey - Target index key in global state object.
+     */
     function setupButtonSelector(groupId, stateKey) {
         const group = document.getElementById(groupId);
         if (!group)
@@ -650,7 +680,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 state.values[stateKey] = val;
                 updateRunningTotal();
             });
-            // Select initial
             if (opt.getAttribute('data-value') === state.values[stateKey]) {
                 options.forEach(o => {
                     o.classList.remove('selected');
@@ -661,6 +690,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+    /**
+     * Sets up active selection event listeners for diet choosing card panels.
+     */
     function initDietOptions() {
         const group = document.getElementById('group-diet-type');
         if (!group)
@@ -678,7 +710,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 state.values.dietType = val;
                 updateRunningTotal();
             });
-            // Select initial
             if (card.getAttribute('data-value') === state.values.dietType) {
                 cards.forEach(c => {
                     c.classList.remove('selected');
@@ -692,8 +723,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================================================
     // 8. RESULTS DISPLAY & INSIGHTS GENERATOR
     // ==========================================================================
+    /**
+     * Makes results sections visible, starts animations, and calls graph setups.
+     *
+     * @param results - Calculated footprint metrics results object.
+     */
     function showResults(results) {
-        // Make sections visible
         const sections = ['results', 'insights', 'eco-score'];
         sections.forEach(id => {
             const el = document.getElementById(id);
@@ -703,36 +738,34 @@ document.addEventListener('DOMContentLoaded', () => {
                 el.classList.add('is-visible');
             }
         });
-        // Scroll to results section smoothly
         const resultsSec = document.getElementById('results');
         if (resultsSec) {
             resultsSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
-        // Trigger animated numbers
         const totalValEl = document.getElementById('total-emissions-value');
         animateCounter(totalValEl, results.total, 1500, '', '', 2);
         animateCounter(document.getElementById('stat-trees'), results.trees, 1500, '', '', 0);
-        // Percentage comparison with world
         const WORLD_AVERAGE = 4.5;
         const worldDiff = ((results.total - WORLD_AVERAGE) / WORLD_AVERAGE) * 100;
         const worldPrefix = worldDiff > 0 ? '+' : '';
         animateCounter(document.getElementById('stat-vs-world'), worldDiff, 1500, worldPrefix, '%', 0);
         animateCounter(document.getElementById('stat-cost'), results.costImpact, 1500, '$', '/mo', 0);
         animateCounter(document.getElementById('stat-earth-days'), results.earthsNeeded, 1500, '', ' Earths', 1);
-        // Draw charts
         donutAnimProgress = 0;
         barAnimProgress = 0;
         const donutCanvas = document.getElementById('donut-chart');
         drawDonutChart(donutCanvas, results.breakdown, true);
         const barCanvas = document.getElementById('bar-chart');
         drawBarChart(barCanvas, results.total);
-        // Generate Insights
         generateAndPopulateInsights(results);
-        // Populate Eco Score Grade Card
         populateEcoScore(results);
-        // Populate Achievements
         checkAchievements(results);
     }
+    /**
+     * Generates localized suggestions dynamically targeting the highest emission segments.
+     *
+     * @param results - Emissions calculation outcomes.
+     */
     function generateAndPopulateInsights(results) {
         const v = state.values;
         const insights = [];
@@ -746,7 +779,6 @@ document.addEventListener('DOMContentLoaded', () => {
             shopping: 0.006,
             recycling: -0.015
         };
-        // Transport insights
         if (v.carKm > 40 && v.carType !== 'electric') {
             const currentFactor = EMISSION_FACTORS.car[v.carType] ?? 0.21;
             const possibleSaving = (v.carKm * 365 * (currentFactor - EMISSION_FACTORS.car.electric)) / 1000;
@@ -759,7 +791,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         else if (v.carKm > 20) {
             const currentFactor = EMISSION_FACTORS.car[v.carType] ?? 0.21;
-            const transitSaving = (v.carKm * 180 * currentFactor) / 1000; // assumes commuting 180 workdays
+            const transitSaving = (v.carKm * 180 * currentFactor) / 1000;
             insights.push({
                 category: 'transport',
                 title: 'Adopt Hybrid Public Transit',
@@ -776,7 +808,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 saving: `Save ${flightSave.toFixed(1)}t CO₂/yr`
             });
         }
-        // Energy Insights
         if (v.energySource === 'grid') {
             const solarSaving = (v.electricity * 12 * EMISSION_FACTORS.electricity * 0.95) / 1000;
             insights.push({
@@ -796,7 +827,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 saving: `Save ${heatPumpSaving.toFixed(1)}t CO₂/yr`
             });
         }
-        // Diet Insights
         if (v.dietType === 'meat-heavy' || v.dietType === 'average') {
             const currentDietT = EMISSION_FACTORS.diet[v.dietType] ?? 2.5;
             const veggieSaving = currentDietT - EMISSION_FACTORS.diet.vegetarian;
@@ -816,7 +846,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 saving: `Save ${wasteSaving.toFixed(2)}t CO₂/yr`
             });
         }
-        // Lifestyle insights
         if (v.shopping > 400) {
             const shopSaving = (v.shopping - 200) * 12 * EMISSION_FACTORS.shopping / 1000;
             insights.push({
@@ -835,11 +864,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 saving: `Save ${recSaving.toFixed(2)}t CO₂/yr`
             });
         }
-        // Inject to insights grid
         const container = document.getElementById('insights-container');
         if (container) {
             container.textContent = '';
-            // Limit to max 4 highly relevant insights
             insights.slice(0, 4).forEach((ins, idx) => {
                 const card = document.createElement('div');
                 card.className = `glass-card insight-card insight-card--${ins.category} fade-in-up stagger-${idx + 1} is-visible`;
@@ -883,24 +910,25 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     }
+    /**
+     * Updates letters and grades in the Eco Score module wrapper.
+     *
+     * @param results - Calculated footprint metrics results.
+     */
     function populateEcoScore(results) {
         const letterEl = document.getElementById('eco-score-letter');
         const descEl = document.getElementById('eco-score-description');
         if (letterEl && descEl) {
-            // Set letter and apply class color coding
             letterEl.className = 'score-letter';
             const gradeClass = results.ecoScore.letter.toLowerCase().replace('+', '');
             letterEl.classList.add(`grade-${gradeClass}`);
             letterEl.innerText = results.ecoScore.letter;
-            // Set description
             descEl.innerText = results.ecoScore.description;
         }
-        // Animate Comparison you bar width
         const youBar = document.getElementById('comparison-you');
         const youValEl = document.getElementById('val-comp-you');
         if (youBar && youValEl) {
             const US_AVERAGE = 14.7;
-            // Proportional calculation (US average of 14.7t is our 100% baseline)
             const pct = Math.min(100, (results.total / US_AVERAGE) * 100);
             setTimeout(() => {
                 youBar.style.width = `${pct}%`;
@@ -908,12 +936,17 @@ document.addEventListener('DOMContentLoaded', () => {
             youValEl.innerText = `${results.total.toFixed(1)}t`;
         }
     }
+    /**
+     * Sets unlocked statuses for gamified achievements based on input state values.
+     *
+     * @param results - Emissions calculation outcomes.
+     */
     function checkAchievements(results) {
         const v = state.values;
         const TARGET_2030 = 2.0;
         const WORLD_AVERAGE = 4.5;
         const achievements = [
-            { id: 'ach-first-step', unlock: true }, // always unlocked after calculation
+            { id: 'ach-first-step', unlock: true },
             { id: 'ach-eco-warrior', unlock: results.total < WORLD_AVERAGE },
             { id: 'ach-green-hero', unlock: results.total < TARGET_2030 },
             { id: 'ach-diet-champion', unlock: v.dietType === 'vegetarian' || v.dietType === 'vegan' },
@@ -937,28 +970,26 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================================================
     // 9. EXTRA FUNCTIONALITIES (Recalculate, Share, Download, LocalStorage)
     // ==========================================================================
+    /**
+     * Binds click events to CTA action elements (recalculate, share, download).
+     */
     function initActions() {
-        // 1. Recalculate Click
         const btnRecalc = document.getElementById('btn-recalculate');
         if (btnRecalc) {
             btnRecalc.addEventListener('click', () => {
-                // Reset steps & navigation
                 goToStep(1);
-                // Hide results sections
                 const sections = ['results', 'insights', 'eco-score'];
                 sections.forEach(id => {
                     const el = document.getElementById(id);
                     if (el)
                         el.classList.remove('visible');
                 });
-                // Scroll back up to calculator
                 const calcSec = document.getElementById('calculator');
                 if (calcSec) {
                     calcSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }
             });
         }
-        // 2. Share Click
         const btnShare = document.getElementById('btn-share');
         if (btnShare) {
             btnShare.addEventListener('click', () => {
@@ -976,7 +1007,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             });
         }
-        // 3. Download Report Click
         const btnDownload = document.getElementById('btn-download');
         if (btnDownload) {
             btnDownload.addEventListener('click', () => {
@@ -1022,6 +1052,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================================================
     // 10. SCROLL & INTERSECTION OBSERVER ANIMATIONS
     // ==========================================================================
+    /**
+     * Initializes intersection observers for triggering staggered fade-in animations on scroll.
+     */
     function initScrollAnimations() {
         const observerOptions = {
             threshold: 0.1,
@@ -1034,7 +1067,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         }, observerOptions);
-        // Observe all scrolling elements
         document.querySelectorAll('.fade-in-up, .fade-in-left, .fade-in-right, .scale-in').forEach(el => {
             observer.observe(el);
         });
@@ -1042,6 +1074,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================================================
     // 11. NAVBAR SCROLL & ACTIVE TRACKING
     // ==========================================================================
+    /**
+     * Adjusts navbar backgrounds on scroll and highlights the active section in navigation links.
+     */
     function initNavbarScroll() {
         const navbar = document.getElementById('navbar');
         const sections = document.querySelectorAll('section');
@@ -1049,14 +1084,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!navbar)
             return;
         window.addEventListener('scroll', () => {
-            // Toggle class scrolled on navbar
             if (window.scrollY > 50) {
                 navbar.classList.add('scrolled');
             }
             else {
                 navbar.classList.remove('scrolled');
             }
-            // Track active section and style corresponding nav link
             let currentSectionId = '';
             sections.forEach(sec => {
                 const top = sec.offsetTop - 120;
@@ -1076,7 +1109,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
         });
-        // Close mobile menu on clicking any navigation anchor
         navLinks.forEach(link => {
             link.addEventListener('click', () => {
                 const navLinksContainer = document.getElementById('nav-links');
@@ -1094,6 +1126,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================================================
     // 12. MOBILE HAMBURGER MENU
     // ==========================================================================
+    /**
+     * Binds click handlers to slide out mobile drawer menus when the hamburger is toggled.
+     */
     function initMobileMenu() {
         const menuBtn = document.getElementById('mobile-menu-btn');
         const navLinks = document.getElementById('nav-links');
@@ -1108,19 +1143,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================================================
     // 13. HERO WORLD EMISSIONS LIVE COUNTER
     // ==========================================================================
+    /**
+     * Runs the sub-second global emissions counter in the hero header.
+     */
     function initHeroCounter() {
         const liveCounterEl = document.getElementById('live-counter');
         if (!liveCounterEl)
             return;
-        // Daily global emission rate: approx. 100,000,000 tonnes (100 million tonnes)
-        // = approx. 1157.4 tonnes per second
         const emissionsPerSecond = 1157.4;
-        // Estimate baseline starting today at 12:00 AM local time
         const now = new Date();
         const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         const secondsElapsed = (now.getTime() - startOfDay.getTime()) / 1000;
         let baseCount = secondsElapsed * emissionsPerSecond;
-        // Fast animation refresh
         setInterval(() => {
             baseCount += (emissionsPerSecond * 0.1);
             liveCounterEl.innerText = Math.round(baseCount).toLocaleString();
@@ -1129,10 +1163,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================================================
     // 14. TOAST NOTIFICATION SYSTEM
     // ==========================================================================
+    /**
+     * Spawns a floating glassmorphic toast notification.
+     *
+     * @param message - The alert text message content.
+     * @param type - Alert status level ('success' | 'error').
+     * @param duration - Self dismiss timer delay in ms.
+     */
     function showToast(message, type = 'success', duration = 3000) {
         const toast = document.createElement('div');
         toast.className = 'glass-card';
-        // Inline styling for toast container overrides
         toast.style.position = 'fixed';
         toast.style.top = '24px';
         toast.style.right = '24px';
@@ -1147,7 +1187,6 @@ document.addEventListener('DOMContentLoaded', () => {
         toast.style.boxShadow = 'var(--shadow-glow)';
         toast.style.transform = 'translateX(100%)';
         toast.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
-        // Icon badge prefix
         const icon = type === 'success' ? '🌱' : '⚠️';
         toast.textContent = '';
         const span = document.createElement('span');
@@ -1156,11 +1195,9 @@ document.addEventListener('DOMContentLoaded', () => {
         toast.appendChild(span);
         toast.appendChild(document.createTextNode(message));
         document.body.appendChild(toast);
-        // Slide in
         setTimeout(() => {
             toast.style.transform = 'translateX(0)';
         }, 50);
-        // Dismiss
         setTimeout(() => {
             toast.style.transform = 'translateX(120%)';
             setTimeout(() => {
@@ -1171,14 +1208,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================================================
     // 15. CHECK & RESTORE SAVE STATE
     // ==========================================================================
+    /**
+     * Retrieves previous session parameters from localStorage and populates sliders/selectors.
+     */
     function checkSavedState() {
         const saved = localStorage.getItem('ecotrack_state');
         if (saved) {
             try {
                 const parsed = JSON.parse(saved);
-                // Overwrite defaults in state values
                 Object.assign(state.values, parsed);
-                // Notify user they can restore
                 setTimeout(() => {
                     showToast('Restored your previously saved input state!', 'success', 4000);
                 }, 1000);
@@ -1191,15 +1229,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================================================
     // 16. RESPONSIVE CHART REDRAW ON RESIZE
     // ==========================================================================
+    /**
+     * Redraws canvas charts on window resize event actions, debouncing callbacks to conserve execution resources.
+     */
     function initChartResize() {
         let resizeTimeout;
         window.addEventListener('resize', () => {
-            clearTimeout(resizeTimeout);
+            if (resizeTimeout)
+                clearTimeout(resizeTimeout);
             resizeTimeout = setTimeout(() => {
                 if (state.results) {
                     const donutCanvas = document.getElementById('donut-chart');
                     const barCanvas = document.getElementById('bar-chart');
-                    // Disable animation for instant redraw
                     donutAnimProgress = 1;
                     barAnimProgress = 1;
                     drawDonutChart(donutCanvas, state.results.breakdown, false);
@@ -1211,6 +1252,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================================================
     // 17. APPLICATION INITIALIZATION
     // ==========================================================================
+    /**
+     * Primary orchestrator method mapping page listeners and initial calculation loads.
+     */
     function init() {
         initParticles();
         initSliders();
@@ -1223,7 +1267,6 @@ document.addEventListener('DOMContentLoaded', () => {
         initHeroCounter();
         checkSavedState();
         initChartResize();
-        // Initial sync calculation
         updateRunningTotal();
         initActions();
     }

@@ -1,7 +1,12 @@
 /**
  * EcoTrack Carbon Calculation Engine
+ * 
+ * Sourced from verified databases combining EPA, DEFRA, and Our World In Data.
  */
 
+/**
+ * Interface representing the complete set of calculator inputs.
+ */
 export interface StateValues {
   calcMode: string;
   carKm: number;
@@ -21,6 +26,9 @@ export interface StateValues {
   digital: number;
 }
 
+/**
+ * Interface representing a breakdown category element for charts.
+ */
 export interface BreakdownItem {
   category: string;
   value: number;
@@ -28,12 +36,18 @@ export interface BreakdownItem {
   icon: string;
 }
 
+/**
+ * Interface representing the grading scores card profile.
+ */
 export interface EcoScore {
   letter: string;
   score: number;
   description: string;
 }
 
+/**
+ * Interface representing the compiled outputs of the emissions engine.
+ */
 export interface CalculationResults {
   transport: number;
   energy: number;
@@ -47,22 +61,26 @@ export interface CalculationResults {
   costImpact: number;
 }
 
+/**
+ * Scientific emission factors (kg CO2 equivalent per unit).
+ */
 export const EMISSION_FACTORS = {
-  car: { gasoline: 0.21, diesel: 0.27, hybrid: 0.12, electric: 0.05 }, // kg CO2 per km
-  publicTransit: 0.089, // kg CO2 per passenger-km
-  flights: { short: 0.255, long: 0.195 }, // tonnes CO2 per flight (round trip)
-  electricity: 0.417, // kg CO2 per kWh (global average)
+  car: { gasoline: 0.21, diesel: 0.27, hybrid: 0.12, electric: 0.05 },
+  publicTransit: 0.089,
+  flights: { short: 0.255, long: 0.195 },
+  electricity: 0.417,
   energySource: { grid: 1.0, solar: 0.05, wind: 0.02, mixed: 0.5 },
-  heating: { gas: 2.0, electric: 1.5, oil: 2.5, 'heat-pump': 0.5 }, // tonnes/year base
-  homeSize: 0.0005, // multiplier per sqft
+  heating: { gas: 2.0, electric: 1.5, oil: 2.5, 'heat-pump': 0.5 },
+  homeSize: 0.0005,
   diet: { 'meat-heavy': 3.3, average: 2.5, pescatarian: 1.7, vegetarian: 1.5, vegan: 1.0 },
-  foodWaste: 0.02, // tonnes per % wasted
-  localFood: -0.005, // reduction per %
-  shopping: 0.006, // kg CO2 per dollar
-  digital: 0.036, // kg CO2 per hour per day * 365
-  recycling: -0.015 // reduction per %
+  foodWaste: 0.02,
+  localFood: -0.005,
+  shopping: 0.006,
+  digital: 0.036,
+  recycling: -0.015
 };
 
+/** Global averages and targets baseline */
 export const WORLD_AVERAGE = 4.5;
 export const US_AVERAGE = 14.7;
 export const EU_AVERAGE = 6.1;
@@ -70,6 +88,11 @@ export const TARGET_2030 = 2.0;
 
 /**
  * Utility to strictly clamp a numeric value to min and max boundaries.
+ * 
+ * @param val - The raw input numeric value.
+ * @param min - The minimum allowed boundary.
+ * @param max - The maximum allowed boundary.
+ * @returns The clamped safe numeric value.
  */
 export function clampValue(val: number, min: number, max: number): number {
   if (val === null || val === undefined || isNaN(val) || !isFinite(val)) {
@@ -80,6 +103,9 @@ export function clampValue(val: number, min: number, max: number): number {
 
 /**
  * Sanitizes and validates inputs to prevent any out-of-bounds, NaN, or malicious values.
+ * 
+ * @param v - A partial state values object.
+ * @returns A fully sanitized StateValues object.
  */
 export function sanitizeStateValues(v: Partial<StateValues>): StateValues {
   return {
@@ -103,7 +129,12 @@ export function sanitizeStateValues(v: Partial<StateValues>): StateValues {
 }
 
 /**
- * Main calculations runner for Carbon footprint
+ * Main calculations runner for Carbon footprint.
+ * 
+ * Calculates carbon output (in tonnes CO2/year) across four distinct categories.
+ * 
+ * @param values - Current input state parameters.
+ * @returns The fully computed CalculationResults object.
  */
 export function calculateEmissions(values: StateValues): CalculationResults {
   const v = sanitizeStateValues(values);
