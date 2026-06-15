@@ -33,14 +33,17 @@ Built as a high-performance web experience, EcoTrack features an organic biophil
 
 ## 🛠️ Technical Architecture
 
-- **Frontend Core**: Semantic HTML5 & CSS3 variables.
+- **Strict TypeScript**: 100% type-safe codebase compiled via strict settings (`strict: true`).
+- **Frontend Core**: ES modules (`type="module"`) with zero runtime overhead or heavy frameworks.
 - **Canvas Rendering Engine**: Low-level 2D Context API for high frame-rate animations and charts (pixel-scaled for HiDPI/Retina screens).
-- **Core State Engine**: Single-store state module using custom calculation algorithms.
+- **Security Audit & Mitigations**:
+  - **XSS Prevention**: Zero `innerHTML` usage; all elements are generated safely via native DOM APIs.
+  - **Content Security Policy (CSP)**: Integrated a strict CSP header to prevent cross-site scripting attacks.
+  - **Input Sanitization**: Client-side boundaries and engine clamping to reject decimals, negatives, `NaN`, or outlier numbers.
 - **Accessibility & Privacy**:
   - `prefers-reduced-motion` compliance.
   - Skip-to-content navigation links.
   - Screen reader semantic structures (`role`, `aria-live`, `aria-checked`).
-  - Zero tracking scripts or remote dependencies.
   - LocalStorage support to cache calculator inputs on repeat sessions.
 
 ---
@@ -49,7 +52,7 @@ Built as a high-performance web experience, EcoTrack features an organic biophil
 
 The calculation engine uses verified, science-backed constants (combining EPA, DEFRA, and Our World In Data databases):
 
-| Category | parameter / Option | Emission Factor |
+| Category | Parameter / Option | Emission Factor |
 |---|---|---|
 | **Car Fuel** | Gasoline / Diesel / Hybrid / Electric | 0.21 / 0.27 / 0.12 / 0.05 kg CO₂/km |
 | **Public Transit** | Average speed passenger-km | 0.089 kg CO₂/passenger-km |
@@ -71,12 +74,24 @@ Make sure you have [Node.js](https://nodejs.org) installed on your machine.
    ```bash
    cd ecotrack
    ```
-2. Start a local server:
+2. Install devDependencies safely:
+   ```bash
+   npm install --ignore-scripts --no-audit --no-fund
+   ```
+3. Compile TypeScript files:
+   ```bash
+   npm run build
+   ```
+4. Run automated unit tests:
+   ```bash
+   npm test
+   ```
+5. Start a local server:
    ```bash
    # Using Node (NPX)
-   npx -y http-server -p 8000
+   npx -y http-server -p 8080
    
    # Or using Python
-   python -m http.server 8000
+   python -m http.server 8080
    ```
-3. Open http://localhost:8000 in your browser.
+6. Open http://localhost:8080 or http://127.0.0.1:8080 in your browser.
