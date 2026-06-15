@@ -124,13 +124,27 @@
               <h3 class="step-title">🚗 Transportation</h3>
               <p class="step-description">Tell us how you commute and travel throughout the year</p>
             </div>
-            
+
+            <!-- Target/Platform Node selector -->
             <div class="form-group">
               <div class="form-label">
-                <label for="input-car-km">Daily Car Commute</label>
-                <span id="val-car-km" class="form-value">30 km</span>
+                <label for="select-calc-mode">Assessment Target / Node Mode</label>
               </div>
-              <input type="range" id="input-car-km" class="range-slider" min="0" max="200" value="30" step="5" aria-valuemin="0" aria-valuemax="200" aria-valuenow="30">
+              <div class="select-group" id="group-calc-mode">
+                <button type="button" class="select-option selected" data-value="personal" role="radio" aria-checked="true">Personal Account</button>
+                <button type="button" class="select-option" data-value="node-server" role="radio" aria-checked="false">Server Node (IT)</button>
+                <button type="button" class="select-option" data-value="office" role="radio" aria-checked="false">Enterprise Office</button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <div class="form-label">
+                <label for="input-car-km">Daily Car Commute (km)</label>
+              </div>
+              <div style="display: flex; gap: 12px; align-items: center;">
+                <input type="range" id="input-car-km" class="range-slider" min="0" max="200" value="30" step="5" aria-valuemin="0" aria-valuemax="200" aria-valuenow="30" style="flex: 1;">
+                <input type="number" id="input-car-km-manual" min="0" max="200" value="30" style="width: 70px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary); padding: 4px 8px; font-family: var(--font-mono); text-align: center;">
+              </div>
             </div>
 
             <div class="form-group">
@@ -148,25 +162,31 @@
             <div class="form-group">
               <div class="form-label">
                 <label for="input-public-transit">Public Transit (Weekly Hours)</label>
-                <span id="val-public-transit" class="form-value">5 hours</span>
               </div>
-              <input type="range" id="input-public-transit" class="range-slider" min="0" max="40" value="5" step="1" aria-valuemin="0" aria-valuemax="40" aria-valuenow="5">
+              <div style="display: flex; gap: 12px; align-items: center;">
+                <input type="range" id="input-public-transit" class="range-slider" min="0" max="40" value="5" step="1" aria-valuemin="0" aria-valuemax="40" aria-valuenow="5" style="flex: 1;">
+                <input type="number" id="input-public-transit-manual" min="0" max="40" value="5" style="width: 70px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary); padding: 4px 8px; font-family: var(--font-mono); text-align: center;">
+              </div>
             </div>
 
             <div class="form-group">
               <div class="form-label">
                 <label for="input-flights-short">Short Flights (Under 3 hrs / year)</label>
-                <span id="val-flights-short" class="form-value">2 flights</span>
               </div>
-              <input type="range" id="input-flights-short" class="range-slider" min="0" max="20" value="2" step="1" aria-valuemin="0" aria-valuemax="20" aria-valuenow="2">
+              <div style="display: flex; gap: 12px; align-items: center;">
+                <input type="range" id="input-flights-short" class="range-slider" min="0" max="20" value="2" step="1" aria-valuemin="0" aria-valuemax="20" aria-valuenow="2" style="flex: 1;">
+                <input type="number" id="input-flights-short-manual" min="0" max="20" value="2" style="width: 70px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary); padding: 4px 8px; font-family: var(--font-mono); text-align: center;">
+              </div>
             </div>
 
             <div class="form-group">
               <div class="form-label">
                 <label for="input-flights-long">Long Flights (Over 3 hrs / year)</label>
-                <span id="val-flights-long" class="form-value">1 flight</span>
               </div>
-              <input type="range" id="input-flights-long" class="range-slider" min="0" max="10" value="1" step="1" aria-valuemin="0" aria-valuemax="10" aria-valuenow="1">
+              <div style="display: flex; gap: 12px; align-items: center;">
+                <input type="range" id="input-flights-long" class="range-slider" min="0" max="10" value="1" step="1" aria-valuemin="0" aria-valuemax="10" aria-valuenow="1" style="flex: 1;">
+                <input type="number" id="input-flights-long-manual" min="0" max="10" value="1" style="width: 70px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary); padding: 4px 8px; font-family: var(--font-mono); text-align: center;">
+              </div>
             </div>
           </div>
 
@@ -179,10 +199,12 @@
 
             <div class="form-group">
               <div class="form-label">
-                <label for="input-electricity">Monthly Electricity Usage</label>
-                <span id="val-electricity" class="form-value">300 kWh</span>
+                <label for="input-electricity">Monthly Electricity Usage (kWh)</label>
               </div>
-              <input type="range" id="input-electricity" class="range-slider" min="0" max="1000" value="300" step="20" aria-valuemin="0" aria-valuemax="1000" aria-valuenow="300">
+              <div style="display: flex; gap: 12px; align-items: center;">
+                <input type="range" id="input-electricity" class="range-slider" min="0" max="1000" value="300" step="20" aria-valuemin="0" aria-valuemax="1000" aria-valuenow="300" style="flex: 1;">
+                <input type="number" id="input-electricity-manual" min="0" max="1000" value="300" style="width: 70px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary); padding: 4px 8px; font-family: var(--font-mono); text-align: center;">
+              </div>
             </div>
 
             <div class="form-group">
@@ -211,10 +233,12 @@
 
             <div class="form-group">
               <div class="form-label">
-                <label for="input-home-size">Living Space Size</label>
-                <span id="val-home-size" class="form-value">1200 sq ft</span>
+                <label for="input-home-size">Living Space Size (sq ft)</label>
               </div>
-              <input type="range" id="input-home-size" class="range-slider" min="200" max="5000" value="1200" step="100" aria-valuemin="200" aria-valuemax="5000" aria-valuenow="1200">
+              <div style="display: flex; gap: 12px; align-items: center;">
+                <input type="range" id="input-home-size" class="range-slider" min="200" max="5000" value="1200" step="100" aria-valuemin="200" aria-valuemax="5000" aria-valuenow="1200" style="flex: 1;">
+                <input type="number" id="input-home-size-manual" min="200" max="5000" value="1200" style="width: 70px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary); padding: 4px 8px; font-family: var(--font-mono); text-align: center;">
+              </div>
             </div>
           </div>
 
@@ -261,17 +285,21 @@
             <div class="form-group">
               <div class="form-label">
                 <label for="input-food-waste">Food Waste Percentage</label>
-                <span id="val-food-waste" class="form-value">15%</span>
               </div>
-              <input type="range" id="input-food-waste" class="range-slider" min="0" max="50" value="15" step="1" aria-valuemin="0" aria-valuemax="50" aria-valuenow="15">
+              <div style="display: flex; gap: 12px; align-items: center;">
+                <input type="range" id="input-food-waste" class="range-slider" min="0" max="50" value="15" step="1" aria-valuemin="0" aria-valuemax="50" aria-valuenow="15" style="flex: 1;">
+                <input type="number" id="input-food-waste-manual" min="0" max="50" value="15" style="width: 70px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary); padding: 4px 8px; font-family: var(--font-mono); text-align: center;">
+              </div>
             </div>
 
             <div class="form-group">
               <div class="form-label">
                 <label for="input-local-food">Local / Organic Food %</label>
-                <span id="val-local-food" class="form-value">20%</span>
               </div>
-              <input type="range" id="input-local-food" class="range-slider" min="0" max="100" value="20" step="5" aria-valuemin="0" aria-valuemax="100" aria-valuenow="20">
+              <div style="display: flex; gap: 12px; align-items: center;">
+                <input type="range" id="input-local-food" class="range-slider" min="0" max="100" value="20" step="5" aria-valuemin="0" aria-valuemax="100" aria-valuenow="20" style="flex: 1;">
+                <input type="number" id="input-local-food-manual" min="0" max="100" value="20" style="width: 70px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary); padding: 4px 8px; font-family: var(--font-mono); text-align: center;">
+              </div>
             </div>
           </div>
 
@@ -285,25 +313,31 @@
             <div class="form-group">
               <div class="form-label">
                 <label for="input-shopping">Monthly Shopping Expenditure ($)</label>
-                <span id="val-shopping" class="form-value">$500</span>
               </div>
-              <input type="range" id="input-shopping" class="range-slider" min="0" max="2000" value="500" step="50" aria-valuemin="0" aria-valuemax="2000" aria-valuenow="500">
+              <div style="display: flex; gap: 12px; align-items: center;">
+                <input type="range" id="input-shopping" class="range-slider" min="0" max="2000" value="500" step="50" aria-valuemin="0" aria-valuemax="2000" aria-valuenow="500" style="flex: 1;">
+                <input type="number" id="input-shopping-manual" min="0" max="2000" value="500" style="width: 70px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary); padding: 4px 8px; font-family: var(--font-mono); text-align: center;">
+              </div>
             </div>
 
             <div class="form-group">
               <div class="form-label">
                 <label for="input-recycling">Household Recycling Rate</label>
-                <span id="val-recycling" class="form-value">30%</span>
               </div>
-              <input type="range" id="input-recycling" class="range-slider" min="0" max="100" value="30" step="5" aria-valuemin="0" aria-valuemax="100" aria-valuenow="30">
+              <div style="display: flex; gap: 12px; align-items: center;">
+                <input type="range" id="input-recycling" class="range-slider" min="0" max="100" value="30" step="5" aria-valuemin="0" aria-valuemax="100" aria-valuenow="30" style="flex: 1;">
+                <input type="number" id="input-recycling-manual" min="0" max="100" value="30" style="width: 70px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary); padding: 4px 8px; font-family: var(--font-mono); text-align: center;">
+              </div>
             </div>
 
             <div class="form-group">
               <div class="form-label">
                 <label for="input-digital">Daily Active Screen Time</label>
-                <span id="val-digital" class="form-value">6 hours</span>
               </div>
-              <input type="range" id="input-digital" class="range-slider" min="0" max="16" value="6" step="1" aria-valuemin="0" aria-valuemax="16" aria-valuenow="6">
+              <div style="display: flex; gap: 12px; align-items: center;">
+                <input type="range" id="input-digital" class="range-slider" min="0" max="16" value="6" step="1" aria-valuemin="0" aria-valuemax="16" aria-valuenow="6" style="flex: 1;">
+                <input type="number" id="input-digital-manual" min="0" max="16" value="6" style="width: 70px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary); padding: 4px 8px; font-family: var(--font-mono); text-align: center;">
+              </div>
             </div>
           </div>
 

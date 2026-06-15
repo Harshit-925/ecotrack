@@ -19,8 +19,8 @@
   --accent-amber: #F59E0B;
   --accent-red: #EF4444;
   --accent-blue: #3B82F6;
-  --text-primary: #F8FAFC;
-  --text-secondary: #CBD5E1;
+  --text-primary: #FFFFFF;
+  --text-secondary: #E2E8F0;
   --text-muted: #94A3B8;
   --border: rgba(51, 65, 85, 0.5);
   --border-glow: rgba(34, 197, 94, 0.3);
@@ -161,8 +161,8 @@ p {
 }
 
 .section {
-  min-height: 100vh;
-  padding: 120px 0 80px;
+  min-height: auto;
+  padding: 60px 0 40px;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -202,7 +202,7 @@ p {
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--border);
   border-radius: var(--radius-xl);
-  padding: 32px;
+  padding: 20px;
   transition: all var(--transition-normal);
   position: relative;
   box-shadow: var(--shadow-card);
@@ -570,17 +570,17 @@ p {
 
 .section-header {
   text-align: center;
-  margin-bottom: 60px;
+  margin-bottom: 24px;
 }
 
 .section-title {
-  font-size: 2.75rem;
-  margin-bottom: 12px;
+  font-size: 2.2rem;
+  margin-bottom: 8px;
 }
 
 .section-subtitle {
   color: var(--text-secondary);
-  font-size: 1.1rem;
+  font-size: 0.95rem;
 }
 
 .calc-wrapper {
@@ -593,7 +593,7 @@ p {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 48px;
+  margin-bottom: 24px;
   position: relative;
 }
 
@@ -663,9 +663,9 @@ p {
 }
 
 .step-header {
-  margin-bottom: 32px;
+  margin-bottom: 16px;
   border-bottom: 1px solid rgba(51, 65, 85, 0.3);
-  padding-bottom: 16px;
+  padding-bottom: 8px;
 }
 
 .step-title {
@@ -683,16 +683,16 @@ p {
 
 /* Form Controls styling */
 .form-group {
-  margin-bottom: 28px;
+  margin-bottom: 16px;
 }
 
 .form-label {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 6px;
   font-weight: 500;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
 }
 
 .form-value {
@@ -800,6 +800,7 @@ p {
   display: flex;
   flex-direction: column;
   align-items: center;
+  color: var(--text-secondary);
 }
 
 .diet-option:hover {
@@ -819,6 +820,7 @@ p {
 .diet-option.selected {
   border-color: var(--primary);
   background: var(--primary-glow);
+  color: var(--primary-light);
 }
 
 .diet-option.selected svg {
@@ -835,43 +837,44 @@ p {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 32px;
+  margin-top: 20px;
 }
 
-/* Sticky running total at bottom of viewport */
+/* Fixed running total at bottom right of viewport */
 .running-total {
-  position: sticky;
-  bottom: 24px;
-  background: rgba(2, 6, 23, 0.9);
+  position: relative;
+  max-width: 800px;
+  margin: 24px auto 0;
+  background: rgba(2, 6, 23, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--border-glow);
   border-radius: var(--radius-xl);
-  padding: 18px 32px;
+  padding: 16px 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  z-index: 100;
-  margin-top: 48px;
+  z-index: 10;
   box-shadow: var(--shadow-glow), var(--shadow-card);
-  animation: borderGlow 4s infinite alternate;
 }
 
 .running-total-label {
-  font-size: 0.9rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
-  font-weight: 500;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .running-total-value {
   font-family: var(--font-mono);
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 700;
   color: var(--primary-light);
 }
 
 .running-total-value small {
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
 }
 
@@ -1007,6 +1010,22 @@ p {
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+.chart-container canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+#donut-chart {
+  max-width: 280px;
+  aspect-ratio: 1 / 1;
+}
+
+#bar-chart {
+  max-width: 360px;
+  aspect-ratio: 360 / 280;
 }
 
 .chart-legend {
@@ -1648,12 +1667,11 @@ p {
     grid-template-columns: 1fr;
   }
 
+  /* Keep fixed layout on mobile */
   .running-total {
-    padding: 16px 20px;
     bottom: 16px;
-    flex-direction: column;
-    gap: 8px;
-    text-align: center;
+    right: 16px;
+    padding: 8px 16px;
   }
 
   .achievements-grid {

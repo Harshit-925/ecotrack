@@ -36,6 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
     currentStep: 1,
     totalSteps: 4,
     values: {
+      calcMode: 'personal',
       carKm: 30,
       carType: 'gasoline',
       publicTransit: 5,
@@ -86,8 +87,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const lifestyleRecycling = v.recycling * EMISSION_FACTORS.recycling;
     const lifestyleTotal = Math.max(0.1, lifestyleShopping + lifestyleDigital + lifestyleRecycling);
 
+    // Mode Multiplier
+    let modeMultiplier = 1.0;
+    if (v.calcMode === 'node-server') modeMultiplier = 3.5;
+    if (v.calcMode === 'office') modeMultiplier = 2.0;
+
     // Totals
-    const total = transportTotal + energyTotal + dietTotal + lifestyleTotal;
+    const baseTotal = transportTotal + energyTotal + dietTotal + lifestyleTotal;
+    const total = baseTotal * modeMultiplier;
 
     // Eco Score Grade Selection
     let letter = 'F';
@@ -121,16 +128,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     return {
-      transport: parseFloat(transportTotal.toFixed(2)),
-      energy: parseFloat(energyTotal.toFixed(2)),
-      diet: parseFloat(dietTotal.toFixed(2)),
-      lifestyle: parseFloat(lifestyleTotal.toFixed(2)),
+      transport: parseFloat((transportTotal * modeMultiplier).toFixed(2)),
+      energy: parseFloat((energyTotal * modeMultiplier).toFixed(2)),
+      diet: parseFloat((dietTotal * modeMultiplier).toFixed(2)),
+      lifestyle: parseFloat((lifestyleTotal * modeMultiplier).toFixed(2)),
       total: parseFloat(total.toFixed(2)),
       breakdown: [
-        { category: 'Transportation', value: transportTotal, color: '#3B82F6', icon: 'car' },
-        { category: 'Home Energy', value: energyTotal, color: '#F59E0B', icon: 'zap' },
-        { category: 'Diet & Food', value: dietTotal, color: '#22C55E', icon: 'utensils' },
-        { category: 'Lifestyle', value: lifestyleTotal, color: '#A855F7', icon: 'shopping-bag' }
+        { category: 'Transportation', value: transportTotal * modeMultiplier, color: '#3B82F6', icon: 'car' },
+        { category: 'Home Energy', value: energyTotal * modeMultiplier, color: '#F59E0B', icon: 'zap' },
+        { category: 'Diet & Food', value: dietTotal * modeMultiplier, color: '#22C55E', icon: 'utensils' },
+        { category: 'Lifestyle', value: lifestyleTotal * modeMultiplier, color: '#A855F7', icon: 'shopping-bag' }
       ],
       ecoScore: { letter, score, description },
       trees: Math.round(total * 45), // tonnes * 1000 / 22kg (absorbed/tree/yr)
@@ -274,21 +281,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const ctx = canvas.getContext('2d');
     const dpr = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
+    const width = Math.round(rect.width);
+    const height = Math.round(rect.height);
     
     // HDPI setup
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
     ctx.scale(dpr, dpr);
 
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-    const outerRadius = Math.min(rect.width, rect.height) * 0.42;
+    const centerX = width / 2;
+    const centerY = height / 2;
+    const outerRadius = Math.min(width, height) * 0.42;
     const innerRadius = outerRadius * 0.62;
 
     const totalVal = data.reduce((acc, d) => acc + d.value, 0);
 
     function draw(progress) {
-      ctx.clearRect(0, 0, rect.width, rect.height);
+      ctx.clearRect(0, 0, width, height);
       if (totalVal === 0) return;
 
       let startAngle = -Math.PI / 2; // Start at 12 o'clock
@@ -370,7 +379,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const pct = totalVal > 0 ? ((item.value / totalVal) * 100).toFixed(0) : '0';
         const div = document.createElement('div');
         div.className = `legend-item ${index === activeDonutIndex ? 'active' : ''}`;
-        div.style.cursor = 'pointer';
         div.innerHTML = `
           <div class="legend-info">
             <div class="legend-color" style="background: ${item.color}"></div>
@@ -381,15 +389,6 @@ document.addEventListener('DOMContentLoaded', () => {
             <span class="legend-percent">(${pct}%)</span>
           </div>
         `;
-        
-        div.addEventListener('mouseenter', () => {
-          activeDonutIndex = index;
-          drawDonutChart(canvas, data, false);
-        });
-        div.addEventListener('mouseleave', () => {
-          activeDonutIndex = -1;
-          drawDonutChart(canvas, data, false);
-        });
 
         legendEl.appendChild(div);
       });
@@ -456,9 +455,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const ctx = canvas.getContext('2d');
     const dpr = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
+    const width = Math.round(rect.width);
+    const height = Math.round(rect.height);
 
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
     ctx.scale(dpr, dpr);
 
     const benchmarks = [
@@ -472,7 +473,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const maxVal = Math.max(...benchmarks.map(b => b.value));
     const paddingLeft = 90;
     const paddingRight = 50;
-    const chartWidth = rect.width - paddingLeft - paddingRight;
+    const chartWidth = width - paddingLeft - paddingRight;
     const rowHeight = 44;
     const barHeight = 16;
     const startY = 32;
@@ -484,7 +485,7 @@ document.addEventListener('DOMContentLoaded', () => {
     else if (userTotal < EU_AVERAGE) userColor = '#F59E0B'; // Amber
 
     function draw(progress) {
-      ctx.clearRect(0, 0, rect.width, rect.height);
+      ctx.clearRect(0, 0, width, height);
 
       benchmarks.forEach((b, i) => {
         const y = startY + i * rowHeight;
@@ -681,30 +682,42 @@ document.addEventListener('DOMContentLoaded', () => {
     setupSlider('input-digital', 'val-digital', (v) => `${v} hours`);
   }
 
-  function setupSlider(sliderId, displayId, formatter) {
-    const slider = document.getElementById(sliderId);
-    const display = document.getElementById(displayId);
-    if (!slider || !display) return;
+    // Add target node selector mode behavior
+    setupButtonSelector('group-calc-mode', 'calcMode');
 
-    // Map input to state key
-    const stateKey = sliderId.replace('input-', '').replace(/-([a-z])/g, (g) => g[1].toUpperCase());
+    function setupSlider(sliderId, displayId, formatter) {
+      const slider = document.getElementById(sliderId);
+      const manualInput = document.getElementById(sliderId + '-manual');
+      
+      // Map input to state key
+      const stateKey = sliderId.replace('input-', '').replace(/-([a-z])/g, (g) => g[1].toUpperCase());
 
-    // Update handler
-    const update = () => {
-      const val = parseInt(slider.value);
-      display.innerText = formatter(val);
-      state.values[stateKey] = val;
-      updateRunningTotal();
-    };
+      const syncValues = (val) => {
+        state.values[stateKey] = val;
+        
+        if (slider) slider.value = val;
+        if (manualInput) manualInput.value = val;
+        
+        updateRunningTotal();
+      };
 
-    slider.addEventListener('input', update);
-    
-    // Sync initial state values to slider inputs
-    if (state.values[stateKey] !== undefined) {
-      slider.value = state.values[stateKey];
-      display.innerText = formatter(state.values[stateKey]);
+      if (slider) {
+        slider.addEventListener('input', () => {
+          syncValues(parseInt(slider.value) || 0);
+        });
+      }
+
+      if (manualInput) {
+        manualInput.addEventListener('input', () => {
+          syncValues(parseInt(manualInput.value) || 0);
+        });
+      }
+
+      // Sync initial state values
+      if (state.values[stateKey] !== undefined) {
+        syncValues(state.values[stateKey]);
+      }
     }
-  }
 
   function initSelectOptions() {
     // 1. Car type
@@ -781,9 +794,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // 10. RESULTS DISPLAY & INSIGHTS GENERATOR
   // ==========================================================================
   function showResults(results) {
-    // Hide running total stick footer to clean up space
-    const runTotalEl = document.getElementById('running-total');
-    if (runTotalEl) runTotalEl.classList.add('hidden');
+    // Keep running total container visible
+    // const runTotalEl = document.getElementById('running-total');
+    // if (runTotalEl) runTotalEl.classList.add('hidden');
 
     // Make sections visible
     const sections = ['results', 'insights', 'eco-score'];
@@ -1031,9 +1044,9 @@ document.addEventListener('DOMContentLoaded', () => {
           if (el) el.classList.remove('visible');
         });
 
-        // Show running total bar again
-        const runTotalEl = document.getElementById('running-total');
-        if (runTotalEl) runTotalEl.classList.remove('hidden');
+        // Keep running total visible
+        // const runTotalEl = document.getElementById('running-total');
+        // if (runTotalEl) runTotalEl.classList.remove('hidden');
 
         // Scroll back up to calculator
         const calcSec = document.getElementById('calculator');
@@ -1285,7 +1298,30 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ==========================================================================
-  // 18. APPLICATION INITIALIZATION
+  // 18. RESPONSIVE CHART REDRAW ON RESIZE
+  // ==========================================================================
+  function initChartResize() {
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        if (state.results) {
+          const donutCanvas = document.getElementById('donut-chart');
+          const barCanvas = document.getElementById('bar-chart');
+          
+          // Disable animation for instant redraw
+          donutAnimProgress = 1;
+          barAnimProgress = 1;
+          
+          drawDonutChart(donutCanvas, state.results.breakdown, false);
+          drawBarChart(barCanvas, state.results.total);
+        }
+      }, 250);
+    });
+  }
+
+  // ==========================================================================
+  // 19. APPLICATION INITIALIZATION
   // ==========================================================================
   function init() {
     initParticles();
@@ -1298,6 +1334,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initMobileMenu();
     initHeroCounter();
     checkSavedState();
+    initChartResize();
     
     // Initial sync calculation
     updateRunningTotal();
