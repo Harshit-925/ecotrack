@@ -1,5 +1,11 @@
 import { calculateEmissions, StateValues, CalculationResults, BreakdownItem } from './calculator.js';
 
+declare global {
+  interface CanvasRenderingContext2D {
+    roundRect(x: number, y: number, w: number, h: number, r: number | number[]): void;
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   'use strict';
 
@@ -433,13 +439,6 @@ document.addEventListener('DOMContentLoaded', () => {
   let barAnimProgress = 0;
 
   /**
-   * Extended interface for elements supporting rounded rect layouts without using raw 'any'.
-   */
-  interface CanvasContextWithRoundRect extends CanvasRenderingContext2D {
-    roundRect(x: number, y: number, w: number, h: number, r: number | number[]): CanvasRenderingContext2D;
-  }
-
-  /**
    * Draws comparative horizontal bar charts showing benchmarks against EU/US/World averages.
    * 
    * @param canvasEl - Target canvas element.
@@ -500,9 +499,8 @@ document.addEventListener('DOMContentLoaded', () => {
         chartCtx.fillStyle = '#0f172a';
         chartCtx.beginPath();
         
-        const roundedCtx = chartCtx as unknown as CanvasContextWithRoundRect;
-        if (typeof roundedCtx.roundRect === 'function') {
-          roundedCtx.roundRect(paddingLeft, y, chartWidth, barHeight, 4);
+        if (typeof chartCtx.roundRect === 'function') {
+          chartCtx.roundRect(paddingLeft, y, chartWidth, barHeight, 4);
         } else {
           chartCtx.rect(paddingLeft, y, chartWidth, barHeight);
         }
@@ -522,8 +520,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         chartCtx.beginPath();
-        if (typeof roundedCtx.roundRect === 'function') {
-          roundedCtx.roundRect(paddingLeft, y, Math.max(2, fillWidth), barHeight, 4);
+        if (typeof chartCtx.roundRect === 'function') {
+          chartCtx.roundRect(paddingLeft, y, Math.max(2, fillWidth), barHeight, 4);
         } else {
           chartCtx.rect(paddingLeft, y, Math.max(2, fillWidth), barHeight);
         }
@@ -677,6 +675,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   setupButtonSelector('group-calc-mode', 'calcMode');
 
+  type NumericStateKeys = 'carKm' | 'publicTransit' | 'flightsShort' | 'flightsLong' | 'electricity' | 'homeSize' | 'foodWaste' | 'localFood' | 'shopping' | 'recycling' | 'digital';
+
   /**
    * Configures bidirectional synchronization between slider and manual text input.
    * 
@@ -687,7 +687,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const slider = document.getElementById(sliderId) as HTMLInputElement | null;
     const manualInput = document.getElementById(sliderId + '-manual') as HTMLInputElement | null;
 
-    const stateKey = sliderId.replace('input-', '').replace(/-([a-z])/g, (g) => g[1].toUpperCase()) as keyof StateValues;
+    const stateKey = sliderId.replace('input-', '').replace(/-([a-z])/g, (g) => g[1].toUpperCase()) as NumericStateKeys;
 
     const syncValues = (val: number) => {
       let min = 0;
@@ -706,8 +706,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const clampedVal = Math.max(min, Math.min(max, val));
 
-      // Eliminate raw 'any' key index assignment using cast to union type
-      state.values[stateKey] = clampedVal as never;
+      state.values[stateKey] = clampedVal;
 
       if (slider) slider.value = clampedVal.toString();
       if (manualInput) manualInput.value = clampedVal.toString();
@@ -742,7 +741,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (state.values[stateKey] !== undefined) {
-      syncValues(state.values[stateKey] as number);
+      syncValues(state.values[stateKey]);
     }
   }
 
@@ -755,13 +754,15 @@ document.addEventListener('DOMContentLoaded', () => {
     setupButtonSelector('group-heating', 'heating');
   }
 
+  type StringStateKeys = 'calcMode' | 'carType' | 'energySource' | 'heating';
+
   /**
    * Sets up selection events inside a button choice container.
    * 
    * @param groupId - Parent element ID.
    * @param stateKey - Target index key in global state object.
    */
-  function setupButtonSelector(groupId: string, stateKey: keyof StateValues): void {
+  function setupButtonSelector(groupId: string, stateKey: StringStateKeys): void {
     const group = document.getElementById(groupId);
     if (!group) return;
 
@@ -776,7 +777,15 @@ document.addEventListener('DOMContentLoaded', () => {
         opt.setAttribute('aria-checked', 'true');
 
         const val = opt.getAttribute('data-value') || '';
-        state.values[stateKey] = val as never;
+        if (stateKey === 'calcMode') {
+          state.values.calcMode = (val === 'office' || val === 'node-server' || val === 'personal') ? val : 'personal';
+        } else if (stateKey === 'carType') {
+          state.values.carType = (val === 'diesel' || val === 'hybrid' || val === 'electric') ? val : 'gasoline';
+        } else if (stateKey === 'energySource') {
+          state.values.energySource = (val === 'solar' || val === 'wind' || val === 'mixed') ? val : 'grid';
+        } else if (stateKey === 'heating') {
+          state.values.heating = (val === 'electric' || val === 'oil' || val === 'heat-pump') ? val : 'gas';
+        }
         updateRunningTotal();
       });
 
@@ -809,7 +818,7 @@ document.addEventListener('DOMContentLoaded', () => {
         card.setAttribute('aria-checked', 'true');
 
         const val = card.getAttribute('data-value') || '';
-        state.values.dietType = val;
+        state.values.dietType = (val === 'meat-heavy' || val === 'pescatarian' || val === 'vegetarian' || val === 'vegan') ? val : 'average';
         updateRunningTotal();
       });
 
@@ -907,7 +916,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     if (v.carKm > 40 && v.carType !== 'electric') {
-      const currentFactor = EMISSION_FACTORS.car[v.carType as keyof typeof EMISSION_FACTORS.car] ?? 0.21;
+      const currentFactor = EMISSION_FACTORS.car[v.carType] ?? 0.21;
       const possibleSaving = (v.carKm * 365 * (currentFactor - EMISSION_FACTORS.car.electric)) / 1000;
       insights.push({
         category: 'transport',
@@ -916,7 +925,7 @@ document.addEventListener('DOMContentLoaded', () => {
         saving: `Save ${possibleSaving.toFixed(1)}t CO₂/yr`
       });
     } else if (v.carKm > 20) {
-      const currentFactor = EMISSION_FACTORS.car[v.carType as keyof typeof EMISSION_FACTORS.car] ?? 0.21;
+      const currentFactor = EMISSION_FACTORS.car[v.carType] ?? 0.21;
       const transitSaving = (v.carKm * 180 * currentFactor) / 1000;
       insights.push({
         category: 'transport',
@@ -947,7 +956,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (v.heating === 'gas' || v.heating === 'oil') {
-      const currentHeating = EMISSION_FACTORS.heating[v.heating as keyof typeof EMISSION_FACTORS.heating] ?? 2.0;
+      const currentHeating = EMISSION_FACTORS.heating[v.heating] ?? 2.0;
       const heatPumpSaving = currentHeating * 0.6;
       insights.push({
         category: 'energy',
@@ -958,7 +967,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (v.dietType === 'meat-heavy' || v.dietType === 'average') {
-      const currentDietT = EMISSION_FACTORS.diet[v.dietType as keyof typeof EMISSION_FACTORS.diet] ?? 2.5;
+      const currentDietT = EMISSION_FACTORS.diet[v.dietType] ?? 2.5;
       const veggieSaving = currentDietT - EMISSION_FACTORS.diet.vegetarian;
       insights.push({
         category: 'diet',
@@ -1397,7 +1406,21 @@ document.addEventListener('DOMContentLoaded', () => {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        Object.assign(state.values, parsed);
+        if (parsed && typeof parsed === 'object') {
+          const keys = Object.keys(state.values) as Array<keyof StateValues>;
+          for (const key of keys) {
+            const stringKey = key as string;
+            if (stringKey === '__proto__' || stringKey === 'constructor' || stringKey === 'prototype') {
+              continue;
+            }
+            if (Object.prototype.hasOwnProperty.call(parsed, key)) {
+              const val = parsed[key];
+              if (typeof val === typeof state.values[key]) {
+                (state.values as any)[key] = val;
+              }
+            }
+          }
+        }
 
         setTimeout(() => {
           showToast('Restored your previously saved input state!', 'success', 4000);

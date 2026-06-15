@@ -8,17 +8,17 @@
  * Interface representing the complete set of calculator inputs.
  */
 export interface StateValues {
-  calcMode: string;
+  calcMode: 'personal' | 'office' | 'node-server';
   carKm: number;
-  carType: string;
+  carType: 'gasoline' | 'diesel' | 'hybrid' | 'electric';
   publicTransit: number;
   flightsShort: number;
   flightsLong: number;
   electricity: number;
-  energySource: string;
-  heating: string;
+  energySource: 'grid' | 'solar' | 'wind' | 'mixed';
+  heating: 'gas' | 'electric' | 'oil' | 'heat-pump';
   homeSize: number;
-  dietType: string;
+  dietType: 'meat-heavy' | 'average' | 'pescatarian' | 'vegetarian' | 'vegan';
   foodWaste: number;
   localFood: number;
   shopping: number;
@@ -108,18 +108,24 @@ export function clampValue(val: number, min: number, max: number): number {
  * @returns A fully sanitized StateValues object.
  */
 export function sanitizeStateValues(v: Partial<StateValues>): StateValues {
+  const carTypeVal = v.carType ?? 'gasoline';
+  const energySourceVal = v.energySource ?? 'grid';
+  const heatingVal = v.heating ?? 'gas';
+  const dietTypeVal = v.dietType ?? 'average';
+  const calcModeVal = v.calcMode ?? 'personal';
+
   return {
-    calcMode: v.calcMode === 'office' ? 'office' : v.calcMode === 'node-server' ? 'node-server' : 'personal',
+    calcMode: (calcModeVal === 'office' || calcModeVal === 'node-server' || calcModeVal === 'personal') ? calcModeVal : 'personal',
     carKm: clampValue(v.carKm ?? 30, 0, 200),
-    carType: ['gasoline', 'diesel', 'hybrid', 'electric'].includes(v.carType ?? '') ? (v.carType as string) : 'gasoline',
+    carType: (carTypeVal === 'gasoline' || carTypeVal === 'diesel' || carTypeVal === 'hybrid' || carTypeVal === 'electric') ? carTypeVal : 'gasoline',
     publicTransit: clampValue(v.publicTransit ?? 5, 0, 40),
     flightsShort: clampValue(v.flightsShort ?? 2, 0, 20),
     flightsLong: clampValue(v.flightsLong ?? 1, 0, 10),
     electricity: clampValue(v.electricity ?? 300, 0, 1000),
-    energySource: ['grid', 'solar', 'wind', 'mixed'].includes(v.energySource ?? '') ? (v.energySource as string) : 'grid',
-    heating: ['gas', 'electric', 'oil', 'heat-pump'].includes(v.heating ?? '') ? (v.heating as string) : 'gas',
+    energySource: (energySourceVal === 'grid' || energySourceVal === 'solar' || energySourceVal === 'wind' || energySourceVal === 'mixed') ? energySourceVal : 'grid',
+    heating: (heatingVal === 'gas' || heatingVal === 'electric' || heatingVal === 'oil' || heatingVal === 'heat-pump') ? heatingVal : 'gas',
     homeSize: clampValue(v.homeSize ?? 1200, 200, 5000),
-    dietType: ['meat-heavy', 'average', 'pescatarian', 'vegetarian', 'vegan'].includes(v.dietType ?? '') ? (v.dietType as string) : 'average',
+    dietType: (dietTypeVal === 'meat-heavy' || dietTypeVal === 'average' || dietTypeVal === 'pescatarian' || dietTypeVal === 'vegetarian' || dietTypeVal === 'vegan') ? dietTypeVal : 'average',
     foodWaste: clampValue(v.foodWaste ?? 15, 0, 50),
     localFood: clampValue(v.localFood ?? 20, 0, 100),
     shopping: clampValue(v.shopping ?? 500, 0, 2000),
@@ -140,21 +146,21 @@ export function calculateEmissions(values: StateValues): CalculationResults {
   const v = sanitizeStateValues(values);
 
   // 1. Transportation
-  const carFactor = EMISSION_FACTORS.car[v.carType as keyof typeof EMISSION_FACTORS.car] ?? 0.21;
+  const carFactor = EMISSION_FACTORS.car[v.carType] ?? 0.21;
   const transportCar = (v.carKm * 365 * carFactor) / 1000;
   const transportTransit = (v.publicTransit * 30 * 52 * EMISSION_FACTORS.publicTransit) / 1000;
   const transportFlights = (v.flightsShort * EMISSION_FACTORS.flights.short) + (v.flightsLong * EMISSION_FACTORS.flights.long);
   const transportTotal = transportCar + transportTransit + transportFlights;
 
   // 2. Home Energy
-  const energyFactor = EMISSION_FACTORS.energySource[v.energySource as keyof typeof EMISSION_FACTORS.energySource] ?? 1.0;
+  const energyFactor = EMISSION_FACTORS.energySource[v.energySource] ?? 1.0;
   const electricityBase = (v.electricity * 12 * EMISSION_FACTORS.electricity * energyFactor) / 1000;
   const homeSizeMultiplier = (v.homeSize * EMISSION_FACTORS.homeSize) + 0.4;
-  const heatingBase = (EMISSION_FACTORS.heating[v.heating as keyof typeof EMISSION_FACTORS.heating] ?? 2.0) * homeSizeMultiplier;
+  const heatingBase = (EMISSION_FACTORS.heating[v.heating] ?? 2.0) * homeSizeMultiplier;
   const energyTotal = electricityBase + heatingBase;
 
   // 3. Diet
-  const dietBase = EMISSION_FACTORS.diet[v.dietType as keyof typeof EMISSION_FACTORS.diet] ?? 2.5;
+  const dietBase = EMISSION_FACTORS.diet[v.dietType] ?? 2.5;
   const dietWaste = v.foodWaste * EMISSION_FACTORS.foodWaste;
   const dietLocal = v.localFood * EMISSION_FACTORS.localFood;
   const dietTotal = Math.max(0.2, dietBase + dietWaste + dietLocal);

@@ -390,9 +390,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 chartCtx.fillText(b.label, paddingLeft - 12, y + barHeight / 2);
                 chartCtx.fillStyle = '#0f172a';
                 chartCtx.beginPath();
-                const roundedCtx = chartCtx;
-                if (typeof roundedCtx.roundRect === 'function') {
-                    roundedCtx.roundRect(paddingLeft, y, chartWidth, barHeight, 4);
+                if (typeof chartCtx.roundRect === 'function') {
+                    chartCtx.roundRect(paddingLeft, y, chartWidth, barHeight, 4);
                 }
                 else {
                     chartCtx.rect(paddingLeft, y, chartWidth, barHeight);
@@ -412,8 +411,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     chartCtx.fillStyle = 'rgba(148, 163, 184, 0.4)';
                 }
                 chartCtx.beginPath();
-                if (typeof roundedCtx.roundRect === 'function') {
-                    roundedCtx.roundRect(paddingLeft, y, Math.max(2, fillWidth), barHeight, 4);
+                if (typeof chartCtx.roundRect === 'function') {
+                    chartCtx.roundRect(paddingLeft, y, Math.max(2, fillWidth), barHeight, 4);
                 }
                 else {
                     chartCtx.rect(paddingLeft, y, Math.max(2, fillWidth), barHeight);
@@ -606,7 +605,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 max = 16;
             }
             const clampedVal = Math.max(min, Math.min(max, val));
-            // Eliminate raw 'any' key index assignment using cast to union type
             state.values[stateKey] = clampedVal;
             if (slider)
                 slider.value = clampedVal.toString();
@@ -677,7 +675,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 opt.classList.add('selected');
                 opt.setAttribute('aria-checked', 'true');
                 const val = opt.getAttribute('data-value') || '';
-                state.values[stateKey] = val;
+                if (stateKey === 'calcMode') {
+                    state.values.calcMode = (val === 'office' || val === 'node-server' || val === 'personal') ? val : 'personal';
+                }
+                else if (stateKey === 'carType') {
+                    state.values.carType = (val === 'diesel' || val === 'hybrid' || val === 'electric') ? val : 'gasoline';
+                }
+                else if (stateKey === 'energySource') {
+                    state.values.energySource = (val === 'solar' || val === 'wind' || val === 'mixed') ? val : 'grid';
+                }
+                else if (stateKey === 'heating') {
+                    state.values.heating = (val === 'electric' || val === 'oil' || val === 'heat-pump') ? val : 'gas';
+                }
                 updateRunningTotal();
             });
             if (opt.getAttribute('data-value') === state.values[stateKey]) {
@@ -707,7 +716,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 card.classList.add('selected');
                 card.setAttribute('aria-checked', 'true');
                 const val = card.getAttribute('data-value') || '';
-                state.values.dietType = val;
+                state.values.dietType = (val === 'meat-heavy' || val === 'pescatarian' || val === 'vegetarian' || val === 'vegan') ? val : 'average';
                 updateRunningTotal();
             });
             if (card.getAttribute('data-value') === state.values.dietType) {
@@ -1216,7 +1225,21 @@ document.addEventListener('DOMContentLoaded', () => {
         if (saved) {
             try {
                 const parsed = JSON.parse(saved);
-                Object.assign(state.values, parsed);
+                if (parsed && typeof parsed === 'object') {
+                    const keys = Object.keys(state.values);
+                    for (const key of keys) {
+                        const stringKey = key;
+                        if (stringKey === '__proto__' || stringKey === 'constructor' || stringKey === 'prototype') {
+                            continue;
+                        }
+                        if (Object.prototype.hasOwnProperty.call(parsed, key)) {
+                            const val = parsed[key];
+                            if (typeof val === typeof state.values[key]) {
+                                state.values[key] = val;
+                            }
+                        }
+                    }
+                }
                 setTimeout(() => {
                     showToast('Restored your previously saved input state!', 'success', 4000);
                 }, 1000);

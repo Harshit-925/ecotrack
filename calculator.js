@@ -47,18 +47,23 @@ export function clampValue(val, min, max) {
  * @returns A fully sanitized StateValues object.
  */
 export function sanitizeStateValues(v) {
+    const carTypeVal = v.carType ?? 'gasoline';
+    const energySourceVal = v.energySource ?? 'grid';
+    const heatingVal = v.heating ?? 'gas';
+    const dietTypeVal = v.dietType ?? 'average';
+    const calcModeVal = v.calcMode ?? 'personal';
     return {
-        calcMode: v.calcMode === 'office' ? 'office' : v.calcMode === 'node-server' ? 'node-server' : 'personal',
+        calcMode: (calcModeVal === 'office' || calcModeVal === 'node-server' || calcModeVal === 'personal') ? calcModeVal : 'personal',
         carKm: clampValue(v.carKm ?? 30, 0, 200),
-        carType: ['gasoline', 'diesel', 'hybrid', 'electric'].includes(v.carType ?? '') ? v.carType : 'gasoline',
+        carType: (carTypeVal === 'gasoline' || carTypeVal === 'diesel' || carTypeVal === 'hybrid' || carTypeVal === 'electric') ? carTypeVal : 'gasoline',
         publicTransit: clampValue(v.publicTransit ?? 5, 0, 40),
         flightsShort: clampValue(v.flightsShort ?? 2, 0, 20),
         flightsLong: clampValue(v.flightsLong ?? 1, 0, 10),
         electricity: clampValue(v.electricity ?? 300, 0, 1000),
-        energySource: ['grid', 'solar', 'wind', 'mixed'].includes(v.energySource ?? '') ? v.energySource : 'grid',
-        heating: ['gas', 'electric', 'oil', 'heat-pump'].includes(v.heating ?? '') ? v.heating : 'gas',
+        energySource: (energySourceVal === 'grid' || energySourceVal === 'solar' || energySourceVal === 'wind' || energySourceVal === 'mixed') ? energySourceVal : 'grid',
+        heating: (heatingVal === 'gas' || heatingVal === 'electric' || heatingVal === 'oil' || heatingVal === 'heat-pump') ? heatingVal : 'gas',
         homeSize: clampValue(v.homeSize ?? 1200, 200, 5000),
-        dietType: ['meat-heavy', 'average', 'pescatarian', 'vegetarian', 'vegan'].includes(v.dietType ?? '') ? v.dietType : 'average',
+        dietType: (dietTypeVal === 'meat-heavy' || dietTypeVal === 'average' || dietTypeVal === 'pescatarian' || dietTypeVal === 'vegetarian' || dietTypeVal === 'vegan') ? dietTypeVal : 'average',
         foodWaste: clampValue(v.foodWaste ?? 15, 0, 50),
         localFood: clampValue(v.localFood ?? 20, 0, 100),
         shopping: clampValue(v.shopping ?? 500, 0, 2000),

@@ -136,55 +136,47 @@ const mockDocument = {
   body: new MockElement('body')
 };
 
-// Bind to Node's global object safely using Object.defineProperty to bypass read-only getters
-Object.defineProperty(globalThis, 'document', { value: mockDocument, configurable: true, writable: true });
-Object.defineProperty(globalThis, 'window', {
-  value: {
-    innerWidth: 1024,
-    innerHeight: 768,
-    addEventListener: () => {},
-    matchMedia: () => ({ matches: false }),
-    devicePixelRatio: 1
-  },
-  configurable: true,
-  writable: true
-});
-Object.defineProperty(globalThis, 'performance', {
-  value: {
-    now: () => Date.now()
-  },
-  configurable: true,
-  writable: true
-});
-Object.defineProperty(globalThis, 'navigator', {
-  value: {
+// Bind to Node's global object safely via direct assignment
+const g = globalThis as any;
+g.document = mockDocument;
+g.window = {
+  innerWidth: 1024,
+  innerHeight: 768,
+  addEventListener: () => {},
+  matchMedia: () => ({ matches: false }),
+  devicePixelRatio: 1
+};
+g.performance = {
+  now: () => Date.now()
+};
+if (typeof g.navigator === 'undefined') {
+  g.navigator = {
     clipboard: {
       writeText: async () => {}
     }
-  },
-  configurable: true,
-  writable: true
-});
-Object.defineProperty(globalThis, 'localStorage', {
-  value: {
-    getItem: () => null,
-    setItem: () => {}
-  },
-  configurable: true,
-  writable: true
-});
-Object.defineProperty(globalThis, 'setInterval', { value: () => 1, configurable: true, writable: true });
-Object.defineProperty(globalThis, 'requestAnimationFrame', {
-  value: (cb: Function) => setTimeout(() => cb(Date.now()), 16),
-  configurable: true,
-  writable: true
-});
+  };
+} else {
+  Object.defineProperty(g.navigator, 'clipboard', {
+    value: {
+      writeText: async () => {}
+    },
+    configurable: true,
+    writable: true
+  });
+}
+g.localStorage = {
+  getItem: () => null,
+  setItem: () => {}
+};
+g.setInterval = () => 1;
+g.requestAnimationFrame = (cb: Function) => setTimeout(() => cb(Date.now()), 16);
+
 class MockIntersectionObserver {
   observe() {}
   unobserve() {}
   disconnect() {}
 }
-Object.defineProperty(globalThis, 'IntersectionObserver', { value: MockIntersectionObserver, configurable: true, writable: true });
+g.IntersectionObserver = MockIntersectionObserver;
 
 test('EcoTrack DOM UI Integration tests', async (t) => {
   
